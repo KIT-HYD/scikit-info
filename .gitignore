@@ -102,3 +102,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# ------
+# Project specific
+# PyCharm project files
+.idea
+
+# coverage files
+cover
