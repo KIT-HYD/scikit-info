@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def entropy(x, bins=10):
+def entropy(x, bins):
     """ Shannon Entropy
 
     Calculates the Shannon Entropy for the given data array x.
@@ -40,6 +40,12 @@ def entropy(x, bins=10):
     """
     # calculate the empirical probabilities
     count = np.histogram(x, bins=bins)[0]
+
+    # if counts should be None, raise an error
+    if np.sum(count) == 0:
+        raise ValueError('The histogram cannot be empty. Adjust the bins to ' +
+                         'fit the data')
+    # calculate the probabilities
     p = (count / np.sum(count)) + 1e-15
 
     # calculate the Shannon Entropy
