@@ -219,14 +219,17 @@ def joint_entropy(x, y, bins):
         H(x,y) = -\sum_x \sum_y P(x,y) * log_2[P(x,y)]
 
     """
+    # assert array length
+    assert len(x) == len(y)
+
     # get the joint histogram
-    joint_hist = np.histogram2d(x,y, bins=bins)[0]
+    joint_hist = np.histogram2d(x, y, bins=bins)[0]
 
     # claculate the joint probability and add a small number
     joint_p = (joint_hist / np.sum(joint_hist)) + 1e-15
 
     # calculate and return the joint entropy
-    return - np.sum(p * np.log2(p))
+    return - np.sum(joint_p * np.log2(joint_p))
 
 
 def kullback_leibler(x, y, bins):
