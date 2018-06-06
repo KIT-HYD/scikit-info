@@ -150,3 +150,62 @@ def mutual_information(x, y, bins):
     return hx - hcon
 
 
+def joint_entropy(x, y, bins):
+    """Joint Entropy
+
+    Calculates the joint entropy of two discrete distributions x and y. This
+    is the combined Entropy of X added to the conditional Entropy of x giv y.
+    The joint entropy will use the same bin setting for both distributions.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Array of observations that should be used to calculate the
+        joint entropy between two discrete distributions x and y.
+    y : numpy.ndarray
+        See x.
+    bins : integer, list, array, string
+        The specification for the bin edges used to calculate the Entropy.
+        In case bins is a list, the list members will be used as bin edges.
+        In all other cases, bins will be passed through to numpy.histogram in
+        order to calculate the bin edges
+
+    Returns
+    -------
+    float
+
+    Notes
+    -----
+
+    The joint entropy is defined to be the sum of the entropy of y and the
+    conditional entropy of x given y.
+
+    .. math::
+
+        H(x,y) = H(y) + H(x|y)
+
+    """
+    hy = entropy(y, bins=bins)
+    hcon = conditional_entropy(x, y, bins=bins)
+
+    return hcon + hy
+
+
+def kullback_leibler(x, y, bins):
+    """Kullback-Leibler Divergence
+
+    Calculates the Kullback-Leibler Divergence between two discrete
+    distributions x and y. X is considered to be an empirical discrete
+    distribution while y is considered to be the real discrete distribution
+    of the underlying population.m
+
+    Parameters
+    ----------
+    x
+    y
+    bins
+
+    Returns
+    -------
+
+    """
