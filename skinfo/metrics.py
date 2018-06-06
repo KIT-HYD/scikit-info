@@ -82,30 +82,21 @@ def conditional_entropy(x, y, bins):
     Notes
     -----
 
-    This implementation will only work if x and y are of same length.
+    The conditional entropy is calculated using the joint entropy as follows:
+
+    .. math::
+
+        H(x|y) = H(x,y) - H(y)
+
+    where H(x,y) is the joint entropy of x and y; H(y) is the unconditioned
+    entropy of y.
 
     """
-    assert len(x) == len(y)
+    # calculate H(x,y) and H(y)
+    hjoint = joint_entropy(x,y,bins)
+    hy = entropy(y, bins)
 
-    # calculate the joint distribution and marginal distribution for y
-    joint_count = np.histogram2d(x, y, bins=bins)[0]
-    marginal_y = np.histogram(y, bins=bins)[0]
-
-    # generate an iterator for each bin in x
-    def marg(joint, marginal):
-        for i in range(len(marginal)):
-            # add 1e-15 to supress log2(0)
-            p_i = joint[:, i] / np.sum(joint[:, i] + 1e-15) + 1e-15
-            H_i = - p_i.dot(np.log2(p_i))
-
-            # get the probability for the whole bin
-            pxi = marginal[i] / np.sum(marginal) # zeros are ok
-
-            yield pxi * H_i
-
-    # conditional entropy is the sum of all Entropies for the single bins
-    hxy = np.fromiter((m for m in marg(joint_count, marginal_y)), dtype=float)
-    return np.sum(hxy)
+    return hjoint - hy
 
 
 def mutual_information(x, y, bins):
@@ -151,7 +142,7 @@ def mutual_information(x, y, bins):
 
 
 def joint_entropy(x, y, bins):
-    """Joint Entropy
+    r"""Joint Entropy
 
     Calculates the joint entropy of two discrete distributions x and y. This
     is the combined Entropy of X added to the conditional Entropy of x giv y.
@@ -182,13 +173,17 @@ def joint_entropy(x, y, bins):
 
     .. math::
 
-        H(x,y) = H(y) + H(x|y)
+        H(x,y) = -\sum_x \sum_y P(x,y) * log_2[P(x,y)]
 
     """
-    hy = entropy(y, bins=bins)
-    hcon = conditional_entropy(x, y, bins=bins)
+    # get the joint histogram
+    joint_hist = np.histogram2d(x,y, bins=bins)[0]
 
-    return hcon + hy
+    # claculate the joint probability and add a small number
+    joint_p = (joint_hist / np.sum(joint_hist)) + 1e-15
+
+    # calculate and return the joint entropy
+    return - np.sum(p * np.log2(p))
 
 
 def kullback_leibler(x, y, bins):

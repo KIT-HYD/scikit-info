@@ -1,1 +1,1 @@
-from .metrics import entropy, conditional_entropy, mutual_information
+from .metrics import entropy, conditional_entropy, mutual_information, joint_entropy
