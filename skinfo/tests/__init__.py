@@ -1,1 +1,1 @@
-from .metrics import TestEntropy, TestJointEntropy
+from .metrics import TestEntropy, TestJointEntropy, TestDerivedFunctions

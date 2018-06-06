@@ -2,7 +2,8 @@ import unittest
 
 import numpy as np
 
-from skinfo import entropy, joint_entropy
+from skinfo import entropy, joint_entropy, conditional_entropy
+from skinfo import mutual_information
 
 
 class TestEntropy(unittest.TestCase):
@@ -81,8 +82,34 @@ class TestJointEntropy(unittest.TestCase):
             joint_entropy(self.n[1:], self.g, 10)
 
 
-class TestConditionalEntropy(unittest.TestCase):
-    pass
+class TestDerivedFunctions(unittest.TestCase):
+    """
+    If the tests for joint entropy and entropy don't fail,
+    this should always work.
+    """
+    def test_conditional_entropy(self):
+        for i in range(30):
+            x = np.random.normal(5, 4, 1000)
+            y = np.random.normal(7, 4, 1000)
+            bins = np.linspace(np.min(x), np.max(y), 100)
+
+            self.assertAlmostEqual(
+                conditional_entropy(x, y, bins),
+                joint_entropy(x, y, bins) - entropy(y, bins),
+                places=6
+            )
+
+    def test_mutual_information(self):
+        for i in range(30):
+            x = np.random.normal(5, 4, 1000)
+            y = np.random.normal(7, 4, 1000)
+            bins = np.linspace(np.min(x), np.max(y), 100)
+
+            self.assertAlmostEqual(
+                mutual_information(x, y, bins),
+                entropy(x, bins) - conditional_entropy(x, y, bins),
+                places=6
+            )
 
 
 if __name__ == '__main__':
