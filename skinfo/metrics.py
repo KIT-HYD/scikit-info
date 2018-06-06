@@ -141,6 +141,49 @@ def mutual_information(x, y, bins):
     return hx - hcon
 
 
+def cross_entropy(x, y, bins):
+    """ Cross Entropy
+
+    Calculates the cross entropy of two discrete distributions x and y.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Array of observations that should be used to calculate the
+        cross entropy of two discrete distributions x and y.
+    y : numpy.ndarray
+        See x.
+    bins : integer, list, array, string
+        The specification for the bin edges used to calculate the Entropy.
+        In case bins is a list, the list members will be used as bin edges.
+        In all other cases, bins will be passed through to numpy.histogram in
+        order to calculate the bin edges
+
+    Returns
+    -------
+    float
+
+    Notes
+    -----
+
+    The cross entropy is defined as the sum of all information contents
+    inherit to the bins in y multiplied by the probability of the same bin in x:
+
+    .. math::
+
+        H(x||y) = - \sum_x p(x) * log_2 [p(y)]
+
+    """
+    # calculate unconditioned histograms
+    hist_x = np.histogram(x, bins=bins)[0]
+    hist_y = np.histogram(y, bins=bins)[0]
+
+    px = (hist_x / np.sum(hist_x)) + 1e-15
+    py = (hist_y / np.sum(hist_y)) + 1e-15
+
+    return - px.dot(np.log2(py))
+
+
 def joint_entropy(x, y, bins):
     r"""Joint Entropy
 
@@ -187,20 +230,43 @@ def joint_entropy(x, y, bins):
 
 
 def kullback_leibler(x, y, bins):
-    """Kullback-Leibler Divergence
+    r"""Kullback-Leibler Divergence
 
     Calculates the Kullback-Leibler Divergence between two discrete
     distributions x and y. X is considered to be an empirical discrete
     distribution while y is considered to be the real discrete distribution
-    of the underlying population.m
+    of the underlying population.
 
     Parameters
     ----------
-    x
-    y
-    bins
+    x : numpy.ndarray
+        Array of observations that should be used to calculate the
+        Kullback-Leibler divergence between two discrete distributions x and y.
+    y : numpy.ndarray
+        See x.
+    bins : integer, list, array, string
+        The specification for the bin edges used to calculate the Entropy.
+        In case bins is a list, the list members will be used as bin edges.
+        In all other cases, bins will be passed through to numpy.histogram in
+        order to calculate the bin edges
 
     Returns
     -------
+    float
+
+    Notes
+    -----
+
+    The Kullback-Leibler divergence is calculated as the difference of the
+    cross entropy between x and y and the unconditioned entropy of x:
+
+    .. math::
+
+        D_{KL}(x||y) = H(x||y) - H(x)
 
     """
+    # calculte the cross entropy and unconditioned entopy of y
+    hcross = cross_entropy(x, y, bins)
+    hx = entropy(x, bins)
+
+    return hcross - hx
