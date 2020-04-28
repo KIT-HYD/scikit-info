@@ -8,3 +8,4 @@
 
 
 Scikit-info will be a scipy-styled expansion for information theory.
+This module might be rewritten to include Bayes and fuzzy logic functions, as they can come very handy in information therory. Not sure yet.
