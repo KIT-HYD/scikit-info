@@ -1,6 +1,6 @@
 # Scikit-Info
 
-## This is pre-alpha.
+## Under development
 
 [![Build Status](https://travis-ci.org/KIT-HYD/scikit-info.svg?branch=master)](https://travis-ci.org/KIT-HYD/scikit-info)
 [![Documentation Status](https://readthedocs.org/projects/scikit-info/badge/?version=latest)](https://scikit-info.readthedocs.io/en/latest/?badge=latest)

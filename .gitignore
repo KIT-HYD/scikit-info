@@ -107,6 +107,7 @@ venv.bak/
 # Project specific
 # PyCharm project files
 .idea
+.vscode
 
 # coverage files
 cover
