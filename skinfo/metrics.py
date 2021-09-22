@@ -288,6 +288,3 @@ def kullback_leibler(x, y, bins):
     hx = entropy(x, bins)
 
     return hcross - hx
-
-def get_bins(x, y, bins):
-    bins = np.histogram_bin_edges([x, y], bins)
