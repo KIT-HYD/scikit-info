@@ -38,6 +38,9 @@ def entropy(x, bins):
     probailities calculated this way might not be exactly 1.
 
     """
+    # get the bins
+    bins = np.histogram_bin_edges(x, bins)
+
     # calculate the empirical probabilities
     count = np.histogram(x, bins=bins)[0]
 
@@ -92,6 +95,9 @@ def conditional_entropy(x, y, bins):
     entropy of y.
 
     """
+    # get the bins
+    bins = np.histogram_bin_edges([x, y], bins)
+
     # calculate H(x,y) and H(y)
     hjoint = joint_entropy(x,y,bins)
     hy = entropy(y, bins)
@@ -135,6 +141,9 @@ def mutual_information(x, y, bins):
     This implementation will only work if x and y are of same length.
 
     """
+    # get the bins
+    bins = np.histogram_bin_edges([x, y], bins)
+
     hx = entropy(x, bins=bins)
     hcon = conditional_entropy(x, y, bins=bins)
 
@@ -174,6 +183,9 @@ def cross_entropy(x, y, bins):
         H(x||y) = - \sum_x p(x) * log_2 [p(y)]
 
     """
+    # get the bins
+    bins = np.histogram_bin_edges([x, y], bins)
+
     # calculate unconditioned histograms
     hist_x = np.histogram(x, bins=bins)[0]
     hist_y = np.histogram(y, bins=bins)[0]
@@ -221,6 +233,9 @@ def joint_entropy(x, y, bins):
     """
     # assert array length
     assert len(x) == len(y)
+
+    # get the bins
+    bins = np.histogram_bin_edges([x, y], bins)
 
     # get the joint histogram
     joint_hist = np.histogram2d(x, y, bins=bins)[0]
@@ -273,3 +288,6 @@ def kullback_leibler(x, y, bins):
     hx = entropy(x, bins)
 
     return hcross - hx
+
+def get_bins(x, y, bins):
+    bins = np.histogram_bin_edges([x, y], bins)
