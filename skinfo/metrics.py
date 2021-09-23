@@ -95,12 +95,19 @@ def conditional_entropy(x, y, bins):
     entropy of y.
 
     """
-    # get the bins
-    bins_x = np.histogram_bin_edges(x, bins)
-    bins_y = np.histogram_bin_edges(y, bins)
+    # get the bins, only calculate if bins were not calculated before ([array, array])
+    if type(bins) == list:
+        if len(bins) == 2:
+            if (type(bins[0]), type(bins[1])) == (np.ndarray, np.ndarray):
+                bins_x = bins[0]
+                bins_y = bins[1]
+    else:
+        bins_x = np.histogram_bin_edges(x, bins)
+        bins_y = np.histogram_bin_edges(y, bins) 
+        bins = [bins_x, bins_y]
 
     # calculate H(x,y) and H(y)
-    hjoint = joint_entropy(x,y,[bins_x, bins_y])
+    hjoint = joint_entropy(x,y,bins)
     hy = entropy(y, bins_y)
 
     return hjoint - hy
@@ -143,10 +150,11 @@ def mutual_information(x, y, bins):
 
     """
     # get the bins
-    bins = np.histogram_bin_edges([x, y], bins)
+    bins_x = np.histogram_bin_edges(x, bins)
+    bins_y = np.histogram_bin_edges(y, bins)
 
-    hx = entropy(x, bins=bins)
-    hcon = conditional_entropy(x, y, bins=bins)
+    hx = entropy(x, bins_x)
+    hcon = conditional_entropy(x, y, [bins_x, bins_y])
 
     return hx - hcon
 
@@ -246,8 +254,8 @@ def joint_entropy(x, y, bins):
     else:
         bins_x = np.histogram_bin_edges(x, bins)
         bins_y = np.histogram_bin_edges(y, bins) 
-        bins = [bins_x, bins_y]   
-    return bins
+        bins = [bins_x, bins_y]
+
     # get the joint histogram
     joint_hist = np.histogram2d(x, y, bins)[0]
 
