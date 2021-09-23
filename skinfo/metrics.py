@@ -235,12 +235,13 @@ def joint_entropy(x, y, bins):
     assert len(x) == len(y)
 
     # get the bins
-    bins = np.histogram_bin_edges([x, y], bins)
+    bins_x = np.histogram_bin_edges(x, bins)
+    bins_y = np.histogram_bin_edges(y, bins)
 
     # get the joint histogram
-    joint_hist = np.histogram2d(x, y, bins=bins)[0]
+    joint_hist = np.histogram2d(x, y, bins=[bins_x, bins_y])[0]
 
-    # claculate the joint probability and add a small number
+    # calculate the joint probability and add a small number
     joint_p = (joint_hist / np.sum(joint_hist)) + 1e-15
 
     # calculate and return the joint entropy
