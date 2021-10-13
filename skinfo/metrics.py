@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def entropy(x, bins):
+def entropy(x, bins, normalize=False):
     """ Shannon Entropy
 
     Calculates the Shannon Entropy for the given data array x.
@@ -14,8 +14,14 @@ def entropy(x, bins):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
-        In all other cases, bins will be passed through to numpy.histogram in
-        order to calculate the bin edges
+        In all other cases, bins will be passed through to 
+        numpy.histogram_bin_edges in order to calculate the bin edges.
+    normalize: bool
+        If normalize is True, the entropy is normalized by division
+        by the entropy of a uniform distribution with the same number of bins, 
+        since the entropy of a uniform distribution is maximal. 
+        Result is rounded to obtain zero if the result is very small.
+        Defaults to False.
 
     Returns
     -------
@@ -52,10 +58,15 @@ def entropy(x, bins):
     p = (count / np.sum(count)) + 1e-15
 
     # calculate the Shannon Entropy
-    return - p.dot(np.log2(p))
+    if normalize:
+        uniform_dist = np.random.uniform(low=0, high=1, size=len(x))
+        normalizer = entropy(uniform_dist, bins=len(bins))
+        return round((- p.dot(np.log2(p))) / normalizer)
+    else:
+        return - p.dot(np.log2(p))
 
 
-def conditional_entropy(x, y, bins):
+def conditional_entropy(x, y, bins, normalize=False):
     """ Conditional Entropy
 
     Calculates the conditional Shannon Entropy for two discrete
@@ -75,8 +86,14 @@ def conditional_entropy(x, y, bins):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
-        In all other cases, bins will be passed through to numpy.histogram in
-        order to calculate the bin edges
+        In all other cases, bins will be passed through to 
+        numpy.histogram_bin_edges in order to calculate the bin edges.
+    normalize: bool
+        If normalize is True, the conditional entropy is normalized by division
+        by the entropy of x, as the conditional entropy of x|y is never
+        greater than the entropy of x alone.
+        Result is rounded to obtain zero if the result is very small.
+        Defaults to False.
 
     Returns
     -------
@@ -110,10 +127,14 @@ def conditional_entropy(x, y, bins):
     hjoint = joint_entropy(x,y,bins)
     hy = entropy(y, bins_y)
 
-    return hjoint - hy
+    if normalize:
+        normalizer = entropy(x, bins_x)
+        return round((hjoint - hy) / normalizer, 4)
+    else:
+        return hjoint - hy
 
 
-def mutual_information(x, y, bins):
+def mutual_information(x, y, bins, normalize=False):
     """ Mutual information
 
     Calculates the mutual information of a discrete distribution x given a
@@ -132,6 +153,12 @@ def mutual_information(x, y, bins):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to numpy.histogram in
         order to calculate the bin edges
+    normalize: bool
+        If normalize is True, the mutual information is normalized by division
+        by the entropy of x or y, depending on which is smaller, as the mutual 
+        information of x and y is never greater than the entropy of x or y.
+        Result is rounded to obtain zero if the result is very small.
+        Defaults to False.
 
     Returns
     -------
@@ -156,7 +183,11 @@ def mutual_information(x, y, bins):
     hx = entropy(x, bins_x)
     hcon = conditional_entropy(x, y, [bins_x, bins_y])
 
-    return hx - hcon
+    if normalize:
+        normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])
+        return round((hx - hcon) / normalizer)
+    else:
+        return hx - hcon
 
 
 def cross_entropy(x, y, bins):
