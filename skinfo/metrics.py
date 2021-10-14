@@ -59,9 +59,8 @@ def entropy(x, bins, normalize=False):
 
     # calculate the Shannon Entropy
     if normalize:
-        uniform_dist = np.random.uniform(low=0, high=1, size=len(x))
-        normalizer = entropy(uniform_dist, bins=len(bins))
-        return round((- p.dot(np.log2(p))) / normalizer)
+        normalizer = np.log2(len(bins)) # maximal entropy: umiform distribution
+        return round((- p.dot(np.log2(p))) / normalizer, 4)
     else:
         return - p.dot(np.log2(p))
 
@@ -185,7 +184,7 @@ def mutual_information(x, y, bins, normalize=False):
 
     if normalize:
         normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])
-        return round((hx - hcon) / normalizer)
+        return round((hx - hcon) / normalizer, 4)
     else:
         return hx - hcon
 
