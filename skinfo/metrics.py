@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def entropy(x, bins, normalize=False):
+def entropy(x, bins, normalize=False, probabilities=False):
     """ Shannon Entropy
 
     Calculates the Shannon Entropy for the given data array x.
@@ -21,6 +21,10 @@ def entropy(x, bins, normalize=False):
         by the entropy of a uniform distribution with the same number of bins, 
         since the entropy of a uniform distribution is maximal. 
         Result is rounded to obtain zero if the result is very small.
+        Defaults to False.
+    probabilities: bool
+        If True, x and y are assumed to be probabiliy distributions, not
+        observations.
         Defaults to False.
 
     Returns
@@ -44,18 +48,22 @@ def entropy(x, bins, normalize=False):
     probailities calculated this way might not be exactly 1.
 
     """
-    # get the bins
-    bins = np.histogram_bin_edges(x, bins)
+    # calculate probabilities if probabilities == False
+    if not probabilities:
+        # get the bins
+        bins = np.histogram_bin_edges(x, bins)
 
-    # calculate the empirical probabilities
-    count = np.histogram(x, bins=bins)[0]
+        # calculate the empirical probabilities
+        count = np.histogram(x, bins=bins)[0]
 
-    # if counts should be None, raise an error
-    if np.sum(count) == 0:
-        raise ValueError('The histogram cannot be empty. Adjust the bins to ' +
-                         'fit the data')
-    # calculate the probabilities
-    p = (count / np.sum(count)) + 1e-15
+        # if counts should be None, raise an error
+        if np.sum(count) == 0:
+            raise ValueError('The histogram cannot be empty. Adjust the bins to ' +
+                             'fit the data')
+        # calculate the probabilities
+        p = (count / np.sum(count)) + 1e-15
+    else:
+        p = x
 
     # calculate the Shannon Entropy
     if normalize:
@@ -189,7 +197,7 @@ def mutual_information(x, y, bins, normalize=False):
         return hx - hcon
 
 
-def cross_entropy(x, y, bins):
+def cross_entropy(x, y, bins, probabilities=False):
     """ Cross Entropy
 
     Calculates the cross entropy of two discrete distributions x and y.
@@ -206,6 +214,10 @@ def cross_entropy(x, y, bins):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to numpy.histogram in
         order to calculate the bin edges
+    probabilities: bool
+        If True, x and y are assumed to be probabiliy distributions, not
+        observations.
+        Defaults to False.
 
     Returns
     -------
@@ -225,15 +237,20 @@ def cross_entropy(x, y, bins):
     # assert array length
     assert len(x) == len(y)
 
-    # get the bins
-    bins = np.histogram_bin_edges([x, y], bins)
+    # calculate probabilities if probabilities == False
+    if not probabilities:
+        # get the bins
+        bins = np.histogram_bin_edges([x, y], bins)
 
-    # calculate unconditioned histograms
-    hist_x = np.histogram(x, bins=bins)[0]
-    hist_y = np.histogram(y, bins=bins)[0]
+        # calculate unconditioned histograms
+        hist_x = np.histogram(x, bins=bins)[0]
+        hist_y = np.histogram(y, bins=bins)[0]
 
-    px = (hist_x / np.sum(hist_x)) + 1e-15
-    py = (hist_y / np.sum(hist_y)) + 1e-15
+        px = (hist_x / np.sum(hist_x)) + 1e-15
+        py = (hist_y / np.sum(hist_y)) + 1e-15
+    else:
+        px = x
+        py = y
 
     return - px.dot(np.log2(py))
 
@@ -296,7 +313,7 @@ def joint_entropy(x, y, bins):
     return - np.sum(joint_p * np.log2(joint_p))
 
 
-def kullback_leibler(x, y, bins):
+def kullback_leibler(x, y, bins, probabilities=False):
     r"""Kullback-Leibler Divergence
 
     Calculates the Kullback-Leibler Divergence between two discrete
@@ -316,6 +333,10 @@ def kullback_leibler(x, y, bins):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to numpy.histogram in
         order to calculate the bin edges
+    probabilities: bool
+        If True, x and y are assumed to be probabiliy distributions, not
+        observations.
+        Defaults to False.
 
     Returns
     -------
@@ -332,8 +353,65 @@ def kullback_leibler(x, y, bins):
         D_{KL}(x||y) = H(x||y) - H(x)
 
     """
-    # calculte the cross entropy and unconditioned entopy of y
-    hcross = cross_entropy(x, y, bins)
-    hx = entropy(x, bins)
+    # calculte the cross entropy and unconditioned entropy of y
+    hcross = cross_entropy(x, y, bins, probabilities)
+    hx = entropy(x, bins, probabilities)
 
     return hcross - hx
+
+def jensen_shannon(x, y, bins):
+    r"""Jensen-Shannon Divergence
+
+    Calculates the Jensen-Shannon Divergence (JSD) between two discrete
+    distributions x and y. JSD quantifies the difference (or similarity) 
+    between two probability distributions and uses the KL divergence to 
+    calculate a smoothed normalized score [0, 1] that is symmetrical.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Array of observations that should be used to calculate the
+        Jensen-Shannon divergence between two discrete distributions x and y.
+    y : numpy.ndarray
+        See x.
+    bins : integer, list, array, string
+        The specification for the bin edges used to calculate the Entropy.
+        In case bins is a list, the list members will be used as bin edges.
+        In all other cases, bins will be passed through to numpy.histogram in
+        order to calculate the bin edges
+
+    Returns
+    -------
+    float
+
+    Notes
+    -----
+
+    The Jensen-Shannon Divergence is based on the Kullback-Leibler Divergence
+    and is calculated as follows:
+
+    .. math::
+
+        JSD(x||y) = 1/2 * D_{KL}(p_{x}||p_{m}) + 1/2 * D_{KL}(p_{y}||p_{m})
+
+        p_{m} = 1/2 * (p_{x} + p_{y})
+
+    """
+    # assert array length
+    assert len(x) == len(y)
+
+    # get the bins
+    bins = np.histogram_bin_edges([x, y], bins)
+
+    # calculate unconditioned histograms
+    hist_x = np.histogram(x, bins=bins)[0]
+    hist_y = np.histogram(y, bins=bins)[0]
+
+    # calculate probabilities
+    px = (hist_x / np.sum(hist_x)) + 1e-15
+    py = (hist_y / np.sum(hist_y)) + 1e-15
+
+    # calculate m
+    pm = 0.5 * (px + py)
+
+    return 0.5 * (kullback_leibler(px, pm, probabilities=True) + 0.5 * kullback_leibler(py, pm, probabilities=True))
