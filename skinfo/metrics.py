@@ -23,7 +23,7 @@ def entropy(x, bins, normalize=False, probabilities=False):
         Result is rounded to obtain zero if the result is very small.
         Defaults to False.
     probabilities: bool
-        If True, x and y are assumed to be probabiliy distributions, not
+        If True, x is assumed to be a probabiliy distributions, not
         observations.
         Defaults to False.
 
@@ -353,6 +353,14 @@ def kullback_leibler(x, y, bins, probabilities=False):
         D_{KL}(x||y) = H(x||y) - H(x)
 
     """
+    # get the bins, only calculate if bins were not calculated before ([array, array])
+    if type(bins) == list:
+        if len(bins) == 2:
+            if (type(bins[0]), type(bins[1])) == (np.ndarray, np.ndarray):
+                pass
+    else:
+        bins = np.histogram_bin_edges([x, y], bins)
+
     # calculte the cross entropy and unconditioned entropy of y
     hcross = cross_entropy(x, y, bins, probabilities)
     hx = entropy(x, bins, probabilities)
@@ -414,4 +422,4 @@ def jensen_shannon(x, y, bins):
     # calculate m
     pm = 0.5 * (px + py)
 
-    return 0.5 * (kullback_leibler(px, pm, probabilities=True) + 0.5 * kullback_leibler(py, pm, probabilities=True))
+    return 0.5 * kullback_leibler(px, pm, bins=bins, probabilities=True) + 0.5 * kullback_leibler(py, pm, bins=bins, probabilities=True)
