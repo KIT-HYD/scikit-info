@@ -127,7 +127,7 @@ def conditional_entropy(x, y, bins, normalize=False):
     hy = entropy(y, bins_y)
 
     if normalize:
-        normalizer = entropy(x, bins_x)
+        normalizer = entropy(x, bins_x) # H(x|y) cannot be higher than H(x)
         return round((hjoint - hy) / normalizer, 4)
     else:
         return hjoint - hy
@@ -183,7 +183,7 @@ def mutual_information(x, y, bins, normalize=False):
     hcon = conditional_entropy(x, y, [bins_x, bins_y])
 
     if normalize:
-        normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])
+        normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])  # I(X;Y) cannot be higher than min(H(x), H(y))
         return round((hx - hcon) / normalizer, 4)
     else:
         return hx - hcon
