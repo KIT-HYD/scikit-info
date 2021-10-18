@@ -184,7 +184,7 @@ def mutual_information(x, y, bins, normalize=False):
     assert len(x) == len(y)
 
     # calculate entropy(x) and conditional_entropy(x,y)
-    hx = entropy(x, bins, use_probs=False)
+    hx = entropy(x, bins)
     hcon = conditional_entropy(x, y, bins)
 
     if normalize:
@@ -370,11 +370,11 @@ def kullback_leibler(x, y, bins, use_probs=False):
 
     # calculte the cross entropy and unconditioned entropy of y
     hcross = cross_entropy(x, y, bins, use_probs=use_probs)
-    hx = entropy(x, bins, normalize=False, use_probs=use_probs)
+    hx = entropy(x, bins, use_probs=use_probs)
     
     return hcross - hx
 
-def jensen_shannon(x, y, bins, js_distance=False, use_probs=False):
+def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
     r"""Jensen-Shannon Divergence
 
     Calculates the Jensen-Shannon Divergence (JSD) between two discrete
@@ -394,7 +394,7 @@ def jensen_shannon(x, y, bins, js_distance=False, use_probs=False):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to 
         numpy.histogram_bin_edges in order to calculate the bin edges
-    distance : bool
+    calc_distance : bool
         If True, the Jensen-Shannon distance instead of the Jensen-Shannon
         divergence is returned.
         Jensen-Shannon distance is a metric and is the square root of the 
@@ -451,7 +451,7 @@ def jensen_shannon(x, y, bins, js_distance=False, use_probs=False):
     # calculate m
     pm = 0.5 * (px + py)
     
-    if js_distance:
+    if calc_distance:
         return (0.5 * kullback_leibler(px, pm, bins=bins, use_probs=True) + 0.5 * kullback_leibler(py, pm, bins=bins, use_probs=True))**0.5
     else:
         return 0.5 * kullback_leibler(px, pm, bins=bins, use_probs=True) + 0.5 * kullback_leibler(py, pm, bins=bins, use_probs=True)
