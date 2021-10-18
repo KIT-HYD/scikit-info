@@ -48,14 +48,13 @@ def entropy(x, bins, normalize=False, use_probs=False):
     probailities calculated this way might not be exactly 1.
 
     """
-    # calculate probabilities if probabilities == False
+    # calculate probabilities if use_probs == False
     if use_probs:
         # if x does not sum up to 1, raise an error
         if not np.isclose(sum(x),1,atol=0.0001):
             raise ValueError('Probabilities in vector x do not sum up to 1.')
         
         p = x + 1e-15
-        bins = len(x) # every value in x represents one bin
     else:
         # get the bins
         bins = np.histogram_bin_edges(x, bins)
@@ -72,7 +71,10 @@ def entropy(x, bins, normalize=False, use_probs=False):
 
     # calculate the Shannon Entropy
     if normalize:
-        normalizer = np.log2(len(bins)) # maximal entropy: umiform distribution
+        # get number of bins
+        nbins = len(p)
+        # maximal entropy: uniform distribution
+        normalizer = np.log2(len(nbins)) 
         return round((- p.dot(np.log2(p))) / normalizer, 4)
     else:
         return - p.dot(np.log2(p))
@@ -124,22 +126,12 @@ def conditional_entropy(x, y, bins, normalize=False):
     entropy of y.
 
     """
-    # get the bins, only calculate if bins were not calculated before ([array, array])
-    if type(bins) == list:
-        if len(bins) == 2:
-            if (type(bins[0]), type(bins[1])) == (np.ndarray, np.ndarray):
-                bins_x = bins[0]
-                bins_y = bins[1]
-    else:
-        bins_x = np.histogram_bin_edges(x, bins)
-        bins_y = np.histogram_bin_edges(y, bins) 
-        bins = [bins_x, bins_y]
-
     # calculate H(x,y) and H(y)
     hjoint = joint_entropy(x,y,bins)
-    hy = entropy(y, bins_y)
+    hy = entropy(y, bins)
 
     if normalize:
+        bins_x = np.histogram_bin_edges(x, bins)
         normalizer = entropy(x, bins_x)
         return round((hjoint - hy) / normalizer, 4)
     else:
@@ -178,7 +170,7 @@ def mutual_information(x, y, bins, normalize=False):
 
     Notes
     -----
-    The mutual information is defined to be  the difference of the entropy of X
+    The mutual information is defined to be the difference of the entropy of X
     and the conditional entropy of X given Y.
 
     .. math::
@@ -189,23 +181,24 @@ def mutual_information(x, y, bins, normalize=False):
 
     """
     # assert array length
-    assert len(x) != len(y)
+    assert len(x) == len(y)
 
-    # get the bins
-    bins_x = np.histogram_bin_edges(x, bins)
-    bins_y = np.histogram_bin_edges(y, bins)
-
-    hx = entropy(x, bins_x, use_probs=False)
-    hcon = conditional_entropy(x, y, [bins_x, bins_y])
+    # calculate entropy(x) and conditional_entropy(x,y)
+    hx = entropy(x, bins, use_probs=False)
+    hcon = conditional_entropy(x, y, bins)
 
     if normalize:
+        # get the bins
+        bins_x = np.histogram_bin_edges(x, bins)
+        bins_y = np.histogram_bin_edges(y, bins)
+
         normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])
         return round((hx - hcon) / normalizer, 4)
     else:
         return hx - hcon
 
 
-def cross_entropy(x, y, bins, probabilities=False):
+def cross_entropy(x, y, bins, use_probs=False):
     """ Cross Entropy
 
     Calculates the cross entropy of two discrete distributions x and y.
@@ -222,9 +215,11 @@ def cross_entropy(x, y, bins, probabilities=False):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to numpy.histogram in
         order to calculate the bin edges
-    probabilities: bool
-        If True, x and y are assumed to be probabiliy distributions, not
-        observations.
+    use_probs: bool
+        If True, it is assumed that x and y are already a empirical probability 
+        distributions, not observations.
+        Note, that the empirical probability distributions for x and y have to 
+        be calculated with the same bins for cross entropy.
         Defaults to False.
 
     Returns
@@ -242,11 +237,21 @@ def cross_entropy(x, y, bins, probabilities=False):
         H(x||y) = - \sum_x p(x) * log_2 [p(y)]
 
     """
-    # assert array length
-    assert len(x) == len(y)
+   # calculate probabilities if probabilities == False
+    if use_probs:
+        # same bins for x and y -> same length of x and y if use_probs == True
+        assert len(x) == len(y)
 
-    # calculate probabilities if probabilities == False
-    if not probabilities:
+        # if x does not sum up to 1, raise an error
+        if not np.isclose(sum(x),1,atol=0.0001):
+            raise ValueError('Probabilities in vector x do not sum up to 1.')
+        # if y does not sum up to 1, raise an error
+        if not np.isclose(sum(y),1,atol=0.0001):
+            raise ValueError('Probabilities in vector y do not sum up to 1.')
+
+        px = x + 1e-15
+        py = y + 1e-15
+    else:
         # get the bins
         bins = np.histogram_bin_edges([x, y], bins)
 
@@ -256,9 +261,6 @@ def cross_entropy(x, y, bins, probabilities=False):
 
         px = (hist_x / np.sum(hist_x)) + 1e-15
         py = (hist_y / np.sum(hist_y)) + 1e-15
-    else:
-        px = x
-        py = y
 
     return - px.dot(np.log2(py))
 
@@ -301,18 +303,13 @@ def joint_entropy(x, y, bins):
     # assert array length
     assert len(x) == len(y)
 
-    # get the bins, only calculate if bins were not calculated before ([array, array])
-    if type(bins) == list:
-        if len(bins) == 2:
-            if (type(bins[0]), type(bins[1])) == (np.ndarray, np.ndarray):
-                pass
-    else:
-        bins_x = np.histogram_bin_edges(x, bins)
-        bins_y = np.histogram_bin_edges(y, bins) 
-        bins = [bins_x, bins_y]
+    # get the bins, x and y get their own bins in case of joint entropy
+    bins_x = np.histogram_bin_edges(x, bins)
+    bins_y = np.histogram_bin_edges(y, bins) 
+    bins_xy = [bins_x, bins_y]
 
     # get the joint histogram
-    joint_hist = np.histogram2d(x, y, bins)[0]
+    joint_hist = np.histogram2d(x, y, bins_xy)[0]
 
     # calculate the joint probability and add a small number
     joint_p = (joint_hist / np.sum(joint_hist)) + 1e-15
@@ -321,7 +318,7 @@ def joint_entropy(x, y, bins):
     return - np.sum(joint_p * np.log2(joint_p))
 
 
-def kullback_leibler(x, y, bins, probabilities=False):
+def kullback_leibler(x, y, bins, use_probs=False):
     r"""Kullback-Leibler Divergence
 
     Calculates the Kullback-Leibler Divergence between two discrete
@@ -341,9 +338,11 @@ def kullback_leibler(x, y, bins, probabilities=False):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to numpy.histogram in
         order to calculate the bin edges
-    probabilities: bool
-        If True, x and y are assumed to be probabiliy distributions, not
-        observations.
+    use_probs: bool
+        If True, it is assumed that x and y are already empirical probability 
+        distributions, not observations.
+        Note, that the empirical probability distributions for x and y have to 
+        be calculated with the same bins for Kullback-Leibler divergence.
         Defaults to False.
 
     Returns
@@ -361,21 +360,21 @@ def kullback_leibler(x, y, bins, probabilities=False):
         D_{KL}(x||y) = H(x||y) - H(x)
 
     """
-    # get the bins, only calculate if bins were not calculated before ([array, array])
-    if type(bins) == list:
-        if len(bins) == 2:
-            if (type(bins[0]), type(bins[1])) == (np.ndarray, np.ndarray):
-                pass
-    else:
-        bins = np.histogram_bin_edges([x, y], bins)
+    if use_probs:
+        # if x does not sum up to 1, raise an error
+        if not np.isclose(sum(x),1,atol=0.0001):
+            raise ValueError('Probabilities in vector x do not sum up to 1.')
+        # if y does not sum up to 1, raise an error
+        if not np.isclose(sum(y),1,atol=0.0001):
+            raise ValueError('Probabilities in vector y do not sum up to 1.')
 
     # calculte the cross entropy and unconditioned entropy of y
-    hcross = cross_entropy(x, y, bins, probabilities)
-    hx = entropy(x, bins, probabilities)
-
+    hcross = cross_entropy(x, y, bins, use_probs=use_probs)
+    hx = entropy(x, bins, normalize=False, use_probs=use_probs)
+    
     return hcross - hx
 
-def jensen_shannon(x, y, bins):
+def jensen_shannon(x, y, bins, js_distance=False, use_probs=False):
     r"""Jensen-Shannon Divergence
 
     Calculates the Jensen-Shannon Divergence (JSD) between two discrete
@@ -393,9 +392,20 @@ def jensen_shannon(x, y, bins):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
-        In all other cases, bins will be passed through to numpy.histogram in
-        order to calculate the bin edges
-
+        In all other cases, bins will be passed through to 
+        numpy.histogram_bin_edges in order to calculate the bin edges
+    distance : bool
+        If True, the Jensen-Shannon distance instead of the Jensen-Shannon
+        divergence is returned.
+        Jensen-Shannon distance is a metric and is the square root of the 
+        Jensen-Shannon divergence.
+        Defaults to False.
+    use_probs: bool
+        If True, it is assumed that x and y are already empirical probability 
+        distributions, not observations.
+        Note, that the empirical probability distributions for x and y have to 
+        be calculated with the same bins for Jensen-Shannon divergence / distance.
+        Defaults to False.
     Returns
     -------
     float
@@ -416,18 +426,32 @@ def jensen_shannon(x, y, bins):
     # assert array length
     assert len(x) == len(y)
 
-    # get the bins
-    bins = np.histogram_bin_edges([x, y], bins)
+    if use_probs:
+        # if x does not sum up to 1, raise an error
+        if not np.isclose(sum(x), 1 ,atol=0.0001):
+            raise ValueError('Probabilities in vector x do not sum up to 1.')
+        # if y does not sum up to 1, raise an error
+        if not np.isclose(sum(y), 1, atol=0.0001):
+            raise ValueError('Probabilities in vector y do not sum up to 1.')
 
-    # calculate unconditioned histograms
-    hist_x = np.histogram(x, bins=bins)[0]
-    hist_y = np.histogram(y, bins=bins)[0]
+        px = x + 1e-15
+        py = y + 1e-15
+    else:
+        # get the bins
+        bins = np.histogram_bin_edges([x, y], bins)
 
-    # calculate probabilities
-    px = (hist_x / np.sum(hist_x)) + 1e-15
-    py = (hist_y / np.sum(hist_y)) + 1e-15
+        # calculate unconditioned histograms
+        hist_x = np.histogram(x, bins=bins)[0]
+        hist_y = np.histogram(y, bins=bins)[0]
+
+        # calculate probabilities
+        px = (hist_x / np.sum(hist_x)) + 1e-15
+        py = (hist_y / np.sum(hist_y)) + 1e-15
 
     # calculate m
     pm = 0.5 * (px + py)
-
-    return 0.5 * kullback_leibler(px, pm, bins=bins, probabilities=True) + 0.5 * kullback_leibler(py, pm, bins=bins, probabilities=True)
+    
+    if js_distance:
+        return (0.5 * kullback_leibler(px, pm, bins=bins, use_probs=True) + 0.5 * kullback_leibler(py, pm, bins=bins, use_probs=True))**0.5
+    else:
+        return 0.5 * kullback_leibler(px, pm, bins=bins, use_probs=True) + 0.5 * kullback_leibler(py, pm, bins=bins, use_probs=True)
