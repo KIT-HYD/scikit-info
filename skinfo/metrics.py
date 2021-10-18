@@ -184,7 +184,7 @@ def mutual_information(x, y, bins, normalize=False):
     assert len(x) == len(y)
 
     # calculate entropy(x) and conditional_entropy(x,y)
-    hx = entropy(x, bins, use_probs=False)
+    hx = entropy(x, bins)
     hcon = conditional_entropy(x, y, bins)
 
     if normalize:
@@ -370,7 +370,7 @@ def kullback_leibler(x, y, bins, use_probs=False):
 
     # calculte the cross entropy and unconditioned entropy of y
     hcross = cross_entropy(x, y, bins, use_probs=use_probs)
-    hx = entropy(x, bins, normalize=False, use_probs=use_probs)
+    hx = entropy(x, bins, use_probs=use_probs)
     
     return hcross - hx
 
