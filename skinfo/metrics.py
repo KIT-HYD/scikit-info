@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def entropy(x, bins, normalize=False, probabilities=False):
+def entropy(x, bins, normalize=False, use_probs=False):
     """ Shannon Entropy
 
     Calculates the Shannon Entropy for the given data array x.
@@ -22,9 +22,9 @@ def entropy(x, bins, normalize=False, probabilities=False):
         since the entropy of a uniform distribution is maximal. 
         Result is rounded to obtain zero if the result is very small.
         Defaults to False.
-    probabilities: bool
-        If True, x is assumed to be a probabiliy distributions, not
-        observations.
+    use_probs: bool
+        If True, it is assumed that x is already an empirical probability 
+        distribution, not observations.
         Defaults to False.
 
     Returns
@@ -49,7 +49,14 @@ def entropy(x, bins, normalize=False, probabilities=False):
 
     """
     # calculate probabilities if probabilities == False
-    if not probabilities:
+    if use_probs:
+        # if x does not sum up to 1, raise an error
+        if not np.isclose(sum(x),1,atol=0.0001):
+            raise ValueError('Probabilities in vector x do not sum up to 1.')
+        
+        p = x + 1e-15
+        bins = len(x) # every value in x represents one bin
+    else:
         # get the bins
         bins = np.histogram_bin_edges(x, bins)
 
@@ -62,8 +69,6 @@ def entropy(x, bins, normalize=False, probabilities=False):
                              'fit the data')
         # calculate the probabilities
         p = (count / np.sum(count)) + 1e-15
-    else:
-        p = x
 
     # calculate the Shannon Entropy
     if normalize:
@@ -183,11 +188,14 @@ def mutual_information(x, y, bins, normalize=False):
     This implementation will only work if x and y are of same length.
 
     """
+    # assert array length
+    assert len(x) != len(y)
+
     # get the bins
     bins_x = np.histogram_bin_edges(x, bins)
     bins_y = np.histogram_bin_edges(y, bins)
 
-    hx = entropy(x, bins_x)
+    hx = entropy(x, bins_x, use_probs=False)
     hcon = conditional_entropy(x, y, [bins_x, bins_y])
 
     if normalize:
