@@ -3,7 +3,6 @@ import numpy as np
 
 def entropy(x, bins, normalize=False, use_probs=False):
     """ Shannon Entropy
-
     Calculates the Shannon Entropy for the given data array x.
 
     Parameters
@@ -17,10 +16,7 @@ def entropy(x, bins, normalize=False, use_probs=False):
         In all other cases, bins will be passed through to 
         numpy.histogram_bin_edges in order to calculate the bin edges.
     normalize: bool
-        If normalize is True, the entropy is normalized by division
-        by the entropy of a uniform distribution with the same number of bins, 
-        since the entropy of a uniform distribution is maximal. 
-        Result is rounded to obtain zero if the result is very small.
+        If normalize is True, the entropy is normalized by the maximum entropy.
         Defaults to False.
     use_probs: bool
         If True, it is assumed that x is already an empirical probability 
@@ -69,13 +65,15 @@ def entropy(x, bins, normalize=False, use_probs=False):
         # calculate the probabilities
         p = (count / np.sum(count)) + 1e-15
 
+
     # calculate the Shannon Entropy
     if normalize:
         # get number of bins
         nbins = len(p)
         # maximal entropy: uniform distribution
         normalizer = np.log2(len(nbins)) 
-        return round((- p.dot(np.log2(p))) / normalizer, 4)
+
+        return - p.dot(np.log2(p)) / normalizer
     else:
         return - p.dot(np.log2(p))
 
@@ -106,7 +104,6 @@ def conditional_entropy(x, y, bins, normalize=False):
         If normalize is True, the conditional entropy is normalized by division
         by the entropy of x, as the conditional entropy of x|y is never
         greater than the entropy of x alone.
-        Result is rounded to obtain zero if the result is very small.
         Defaults to False.
 
     Returns
@@ -133,7 +130,7 @@ def conditional_entropy(x, y, bins, normalize=False):
     if normalize:
         bins_x = np.histogram_bin_edges(x, bins)
         normalizer = entropy(x, bins_x)
-        return round((hjoint - hy) / normalizer, 4)
+        return (hjoint - hy) / normalizer
     else:
         return hjoint - hy
 
@@ -155,13 +152,12 @@ def mutual_information(x, y, bins, normalize=False):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
-        In all other cases, bins will be passed through to numpy.histogram in
-        order to calculate the bin edges
+        In all other cases, bins will be passed through to 
+        numpy.histogram_bin_edges in order to calculate the bin edges
     normalize: bool
         If normalize is True, the mutual information is normalized by division
         by the entropy of x or y, depending on which is smaller, as the mutual 
         information of x and y is never greater than the entropy of x or y.
-        Result is rounded to obtain zero if the result is very small.
         Defaults to False.
 
     Returns
@@ -193,11 +189,11 @@ def mutual_information(x, y, bins, normalize=False):
         bins_y = np.histogram_bin_edges(y, bins)
 
         normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])
-        return round((hx - hcon) / normalizer, 4)
+        return (hx - hcon) / normalizer
     else:
         return hx - hcon
 
-
+      
 def cross_entropy(x, y, bins, use_probs=False):
     """ Cross Entropy
 
@@ -213,8 +209,8 @@ def cross_entropy(x, y, bins, use_probs=False):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
-        In all other cases, bins will be passed through to numpy.histogram in
-        order to calculate the bin edges
+        In all other cases, bins will be passed through to 
+        numpy.histogram_bin_edges in order to calculate the bin edges
     use_probs: bool
         If True, it is assumed that x and y are already a empirical probability 
         distributions, not observations.
@@ -282,8 +278,8 @@ def joint_entropy(x, y, bins):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
-        In all other cases, bins will be passed through to numpy.histogram in
-        order to calculate the bin edges
+        In all other cases, bins will be passed through to 
+        numpy.histogram_bin_edges in order to calculate the bin edges
 
     Returns
     -------
@@ -336,8 +332,8 @@ def kullback_leibler(x, y, bins, use_probs=False):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
-        In all other cases, bins will be passed through to numpy.histogram in
-        order to calculate the bin edges
+        In all other cases, bins will be passed through to 
+        numpy.histogram_bin_edges in order to calculate the bin edges
     use_probs: bool
         If True, it is assumed that x and y are already empirical probability 
         distributions, not observations.
@@ -424,7 +420,6 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
 
     References
     -----
-    
     B. Fuglede and F. Topsoe, "Jensen-Shannon divergence and Hilbert 
     space embedding," International Symposium onInformation Theory, 2004. 
     ISIT 2004. Proceedings., 2004, pp. 31-, doi: 10.1109/ISIT.2004.1365067.
