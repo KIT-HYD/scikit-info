@@ -3,7 +3,6 @@ import numpy as np
 
 def entropy(x, bins, normalize=False, use_probs=False):
     """ Shannon Entropy
-
     Calculates the Shannon Entropy for the given data array x.
 
     Parameters
@@ -66,6 +65,7 @@ def entropy(x, bins, normalize=False, use_probs=False):
         # calculate the probabilities
         p = (count / np.sum(count)) + 1e-15
 
+
     # calculate the Shannon Entropy
     if normalize:
         # get number of bins
@@ -73,6 +73,7 @@ def entropy(x, bins, normalize=False, use_probs=False):
         # maximal entropy: uniform distribution
         normalizer = np.log2(len(nbins)) 
         return - p.dot(np.log2(p)) / normalizer
+
     else:
         return - p.dot(np.log2(p))
 
@@ -191,6 +192,7 @@ def mutual_information(x, y, bins, normalize=False):
         return (hx - hcon) / normalizer
     else:
         return hx - hcon
+
 
 
 def cross_entropy(x, y, bins, use_probs=False):
@@ -331,6 +333,7 @@ def kullback_leibler(x, y, bins, use_probs=False):
     bins : integer, list, array, string
         The specification for the bin edges used to calculate the Entropy.
         In case bins is a list, the list members will be used as bin edges.
+
         In all other cases, bins will be passed through to 
         numpy.histogram_bin_edges in order to calculate the bin edges
     use_probs: bool
@@ -419,7 +422,7 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
 
     References
     -----
-    
+
     B. Fuglede and F. Topsoe, "Jensen-Shannon divergence and Hilbert 
     space embedding," International Symposium onInformation Theory, 2004. 
     ISIT 2004. Proceedings., 2004, pp. 31-, doi: 10.1109/ISIT.2004.1365067.
