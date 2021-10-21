@@ -422,6 +422,12 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
 
         p_{m} = 1/2 * (p_{x} + p_{y})
 
+    References
+    -----
+    
+    B. Fuglede and F. Topsoe, "Jensen-Shannon divergence and Hilbert 
+    space embedding," International Symposium onInformation Theory, 2004. 
+    ISIT 2004. Proceedings., 2004, pp. 31-, doi: 10.1109/ISIT.2004.1365067.
     """
     # assert array length
     assert len(x) == len(y)
@@ -450,8 +456,12 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
 
     # calculate m
     pm = 0.5 * (px + py)
+
+    # calculate kullback-leibler divergence between px and pm & py and pm
+    kl_xm = kullback_leibler(px, pm, bins=bins, use_probs=True)
+    kl_ym = kullback_leibler(py, pm, bins=bins, use_probs=True)
     
     if calc_distance:
-        return (0.5 * kullback_leibler(px, pm, bins=bins, use_probs=True) + 0.5 * kullback_leibler(py, pm, bins=bins, use_probs=True))**0.5
+        return (0.5 * kl_xm + 0.5 * kl_ym)**0.5
     else:
-        return 0.5 * kullback_leibler(px, pm, bins=bins, use_probs=True) + 0.5 * kullback_leibler(py, pm, bins=bins, use_probs=True)
+        return (0.5 * kl_xm + 0.5 * kl_ym)
