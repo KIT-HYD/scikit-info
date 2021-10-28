@@ -30,7 +30,6 @@ g_pdf_fd_same_bins = csvread("test_data/g/test_data_g_pdf_same_bins_fd.csv");
 ng_histcounts_fd = csvread("test_data/test_data_n_g_joint_counts_fd.csv");
 
 %% Entropy
-%in: einfach array [...]
 entropy_n = f_entropy_anyd(n_histcounts);
 entropy_g = f_entropy_anyd(g_histcounts);
 
@@ -42,21 +41,17 @@ conditional_entropy_gn = f_conditionalentropy_anyd(ng_histcounts_fd.', f_all_pre
 mutual_info_ng = f_entropy_anyd(n_histcounts) - f_conditionalentropy_anyd(ng_histcounts_fd, f_all_predictor_bincombs([28,27]));
 
 %% Cross Entropy
-%in: einfach zwei arrays [...], [...]
 cross_entropy_ng = f_crossentropy(n_pdf_fd_same_bins, g_pdf_fd_same_bins);
 cross_entropy_gn = f_crossentropy(g_pdf_fd_same_bins, n_pdf_fd_same_bins);
 
 %% Joint Entropy
-%in: beide pdfs -> berechnet joint entropy
 joint_entropy_ng = f_entropy_anyd(ng_histcounts_fd);
 
 %% Kullback-Leibler
-%in: einfach zwei arrays [...], [...]
 kld_ng = f_kld_anyd(n_pdf_fd_same_bins, g_pdf_fd_same_bins);
 kld_gn = f_kld_anyd(g_pdf_fd_same_bins, n_pdf_fd_same_bins);
 
 %% Jensen-Shannon
-%in: einfach zwei arrays [...], [...]
 jsd_ng = f_jsd_anyd(n_pdf_fd_same_bins, g_pdf_fd_same_bins);
 
 

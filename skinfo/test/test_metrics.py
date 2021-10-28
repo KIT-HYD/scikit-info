@@ -67,6 +67,14 @@ def cross_entropy_test(n, g, matlab_res):
     return True 
 
 
+def joint_entropy_test(n, g, matlab_res):
+    # test joint entropy with data n & g (symmetric)
+    assert skinfo.joint_entropy(n, g, bins='fd') == pytest.approx(matlab_res['joint_entropy_ng'][0])
+    assert skinfo.joint_entropy(g, n, bins='fd') == pytest.approx(matlab_res['joint_entropy_ng'][0])
+
+    return True
+
+
 
 
 
@@ -95,4 +103,5 @@ def test_skinfo_metrics():
     assert conditional_entropy_test(n, g, matlab_res)
     assert mutual_information_test(n, g, matlab_res)
     assert cross_entropy_test(n, g, matlab_res)
+    assert joint_entropy_test(n, g, matlab_res)
 
