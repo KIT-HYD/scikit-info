@@ -114,3 +114,6 @@ cover
 
 # MacOS DS_Store
 .DS_Store
+
+# Matlab autosave file
+skinfo/test/matlab_test_metrics/scikit_info_test.asv
