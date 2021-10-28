@@ -47,7 +47,7 @@ def mutual_information_test(n, g, matlab_res):
 
 
 def cross_entropy_test(n, g, matlab_res):
-    # test cross entropy with data n & g (symmetric)
+    # test cross entropy with data n & g (not symmetric)
     assert skinfo.cross_entropy(n, g, bins='fd') == pytest.approx(matlab_res['cross_entropy_ng'][0])
     assert skinfo.cross_entropy(g, n, bins='fd') == pytest.approx(matlab_res['cross_entropy_gn'][0])
     
@@ -76,7 +76,7 @@ def joint_entropy_test(n, g, matlab_res):
 
 
 def kullback_leibler_test(n, g, matlab_res):
-    # test cross entropy with data n & g (symmetric)
+    # test kullback leibler divergence with data n & g (not symmetric)
     assert skinfo.kullback_leibler(n, g, bins='fd') == pytest.approx(matlab_res['kld_ng'][0])
     assert skinfo.kullback_leibler(g, n, bins='fd') == pytest.approx(matlab_res['kld_gn'][0])
     
@@ -93,6 +93,30 @@ def kullback_leibler_test(n, g, matlab_res):
     # test parameter use_probs
     assert skinfo.kullback_leibler(pn, pg, bins='fd', use_probs=True) == pytest.approx(matlab_res['kld_ng'][0])
     assert skinfo.kullback_leibler(pg, pn, bins='fd', use_probs=True) == pytest.approx(matlab_res['kld_gn'][0])
+        
+    return True
+
+def jensen_shannon_test(n, g, matlab_res):
+    # test jensen shannon with data n & g (symmetric)
+    assert skinfo.jensen_shannon(n, g, bins='fd') == pytest.approx(matlab_res['jsd_ng'][0])
+    assert skinfo.jensen_shannon(g, n, bins='fd') == pytest.approx(matlab_res['jsd_ng'][0])
+    
+    # calculate probabilities to test parameter use_probs
+    # get the bins
+    bins = np.histogram_bin_edges([n, g], 'fd')
+    # calculate unconditioned histograms
+    hist_n = np.histogram(n, bins=bins)[0]
+    hist_g = np.histogram(g, bins=bins)[0]
+    #calculate probabilities
+    pn = (hist_n / np.sum(hist_n))
+    pg = (hist_g / np.sum(hist_g))
+    
+    # test parameter use_probs
+    assert skinfo.jensen_shannon(pn, pg, bins='fd', use_probs=True) == pytest.approx(matlab_res['jsd_ng'][0])
+    assert skinfo.jensen_shannon(pg, pn, bins='fd', use_probs=True) == pytest.approx(matlab_res['jsd_ng'][0])
+    
+    # test jensen shannon distance (square root of jsd)
+    assert skinfo.jensen_shannon(n, g, bins='fd', calc_distance=True) == pytest.approx((matlab_res['jsd_ng'][0])**0.5)
         
     return True
 
@@ -125,3 +149,4 @@ def test_skinfo_metrics():
     assert cross_entropy_test(n, g, matlab_res)
     assert joint_entropy_test(n, g, matlab_res)
     assert kullback_leibler_test(n, g, matlab_res)
+    assert jensen_shannon_test(n, g, matlab_res)
