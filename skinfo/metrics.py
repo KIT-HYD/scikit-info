@@ -363,10 +363,22 @@ def kullback_leibler(x, y, bins, use_probs=False):
         # if y does not sum up to 1, raise an error
         if not np.isclose(sum(y),1,atol=0.0001):
             raise ValueError('Probabilities in vector y do not sum up to 1.')
+        
+        px = x + 1e-15
+        py = y + 1e-15
+    else:
+        # get the bins
+        bins = np.histogram_bin_edges([x, y], bins)
+        # calculate unconditioned histograms
+        hist_x = np.histogram(x, bins=bins)[0]
+        hist_y = np.histogram(y, bins=bins)[0]
+        #calculate probabilities
+        px = (hist_x / np.sum(hist_x))
+        py = (hist_y / np.sum(hist_y))
 
     # calculte the cross entropy and unconditioned entropy of y
-    hcross = cross_entropy(x, y, bins, use_probs=use_probs)
-    hx = entropy(x, bins, use_probs=use_probs)
+    hcross = cross_entropy(px, py, bins, use_probs=True)
+    hx = entropy(px, bins, use_probs=True)
     
     return hcross - hx
 
