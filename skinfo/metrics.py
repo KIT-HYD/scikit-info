@@ -71,7 +71,7 @@ def entropy(x, bins, normalize=False, use_probs=False):
         # get number of bins
         nbins = len(p)
         # maximal entropy: uniform distribution
-        normalizer = np.log2(len(nbins)) 
+        normalizer = np.log2(nbins) 
 
         return - p.dot(np.log2(p)) / normalizer
     else:
