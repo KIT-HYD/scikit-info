@@ -75,6 +75,26 @@ def joint_entropy_test(n, g, matlab_res):
     return True
 
 
+def kullback_leibler_test(n, g, matlab_res):
+    # test cross entropy with data n & g (symmetric)
+    assert skinfo.kullback_leibler(n, g, bins='fd') == pytest.approx(matlab_res['kld_ng'][0])
+    assert skinfo.kullback_leibler(g, n, bins='fd') == pytest.approx(matlab_res['kld_gn'][0])
+    
+    # calculate probabilities to test parameter use_probs
+    # get the bins
+    bins = np.histogram_bin_edges([n, g], 'fd')
+    # calculate unconditioned histograms
+    hist_n = np.histogram(n, bins=bins)[0]
+    hist_g = np.histogram(g, bins=bins)[0]
+    #calculate probabilities
+    pn = (hist_n / np.sum(hist_n))
+    pg = (hist_g / np.sum(hist_g))
+    
+    # test parameter use_probs
+    assert skinfo.kullback_leibler(pn, pg, bins='fd', use_probs=True) == pytest.approx(matlab_res['kld_ng'][0])
+    assert skinfo.kullback_leibler(pg, pn, bins='fd', use_probs=True) == pytest.approx(matlab_res['kld_gn'][0])
+        
+    return True
 
 
 
@@ -104,4 +124,4 @@ def test_skinfo_metrics():
     assert mutual_information_test(n, g, matlab_res)
     assert cross_entropy_test(n, g, matlab_res)
     assert joint_entropy_test(n, g, matlab_res)
-
+    assert kullback_leibler_test(n, g, matlab_res)
