@@ -364,8 +364,8 @@ def kullback_leibler(x, y, bins, use_probs=False):
         if not np.isclose(sum(y),1,atol=0.0001):
             raise ValueError('Probabilities in vector y do not sum up to 1.')
         
-        px = x #+ 1e-15
-        py = y #+ 1e-15
+        px = x
+        py = y
     else:
         # get the bins
         bins = np.histogram_bin_edges([x, y], bins)
