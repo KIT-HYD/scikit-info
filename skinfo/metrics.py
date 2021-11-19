@@ -130,7 +130,16 @@ def conditional_entropy(x, y, bins, normalize=False):
     if normalize:
         bins_x = np.histogram_bin_edges(x, bins)
         normalizer = entropy(x, bins_x)
-        return (hjoint - hy) / normalizer
+        conditional_entropy = hjoint - hy
+
+        # check if conditional entropy and normalizer are very small
+        if conditional_entropy < 1e-4 and normalizer < 1e-4:
+            # return zero to prevent very high values of normalized conditional entropy
+            # e.g. conditional entropy = -1.3e-12, normalizer = -1.6e-12 
+            # -> normalized conditional entropy = 812.5
+            return 0
+        else:
+            return conditional_entropy / normalizer
     else:
         return hjoint - hy
 
@@ -189,7 +198,16 @@ def mutual_information(x, y, bins, normalize=False):
         bins_y = np.histogram_bin_edges(y, bins)
 
         normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])
-        return (hx - hcon) / normalizer
+        mutual_info = hx - hcon
+
+        # check if mutual info and normalizer are very small
+        if mutual_info < 1e-4 and normalizer < 1e-4:
+            # return zero to prevent very high values of normalized mutual information
+            # e.g. mutual information = -1.3e-12, normalizer = -1.6e-12 
+            # -> normalized conditional entropy = 812.5
+            return 0
+        else:
+            return conditional_entropy / normalizer
     else:
         return hx - hcon
 
