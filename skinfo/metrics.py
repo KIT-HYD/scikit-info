@@ -207,7 +207,7 @@ def mutual_information(x, y, bins, normalize=False):
             # -> normalized conditional entropy = 812.5
             return 0
         else:
-            return conditional_entropy / normalizer
+            return mutual_info / normalizer
     else:
         return hx - hcon
 
