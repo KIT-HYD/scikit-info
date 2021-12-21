@@ -1,6 +1,83 @@
 import numpy as np
 
 
+def get_2D_bins(x, y, bins, same_bins=False):
+    """ Bin calculation for x and y
+    Calculates the bin edges for the given data arrays x and y.
+
+    Parameters
+    ----------
+    x : numpy.ndarray
+        Array of observations that should be used to calculate the bins.
+    y : numpy.ndarray
+        Array of observations that should be used to calculate the bins.
+    bins : integer, list, array, string
+        The specification for the bin edges used to calculate the Entropy.
+        In case bins is a list of two np.ndarrays , the list members will 
+        be used as bin edges.
+        In case bins is one of the methods of numpy.histogram_bin_edges(),
+        calculation is performed with this function and method.
+        Additional methods: 'uniform_counts' (uniform number of 
+        observations in each bin) and 'unique_values' (each unique value 
+        is a bin).
+        'uniform_counts' method: define bins as a list in the following format:
+        bins = ['uniform_counts', n_bins], n_bins: number of bins
+        Only needed if bins == 'uniform_counts', number of bins
+    same_bins: bool
+        Joint bins for x and y.
+
+    Returns
+    -------
+    bins_x: np.ndarray 
+    bins_y: np.ndarray
+
+    """
+    
+    # precalculated bins [np.ndarray, np.ndarray]: do nothing and return the same bins
+    if isinstance(bins, list):
+        if isinstance(bins[0], np.ndarray) and isinstance(bins[1], np.ndarray):
+            pass
+        elif 'uniform_counts' in bins:
+            try:
+                n = int(bins[1])
+
+                bins_x = np.fromiter(
+                    (np.nanpercentile(x, (i / n) * 100) for i in range(1, n + 1)),
+                    dtype=float)
+                bins_y = np.fromiter(
+                    (np.nanpercentile(y, (i / n) * 100) for i in range(1, n + 1)),
+                    dtype=float)
+                bins = [bins_x, bins_y]    
+            except:
+                raise ValueError(f"Please define number of bins for binning method uniform_counts: bins = ['uniform_bins', n_bins]")
+    else:
+        # calculate bins with np.histogram_bin_edges(), even_width option == int
+        if bins in ['fd', 'doane', 'scott', 'stone', 'rice', 'sturges', 'sqrt'] or isinstance(bins, int):
+            if same_bins:
+                bins_xy = np.histogram_bin_edges([x, y], bins)
+                bins = [bins_xy, bins_xy]
+            else:
+                bins_x = np.histogram_bin_edges(x, bins)
+                bins_y = np.histogram_bin_edges(y, bins)
+                bins = [bins_x, bins_y]
+        elif bins == 'uniform_counts':
+            raise ValueError(f"Please define number of bins for binning method uniform_bins: bins = ['uniform_bins', n_bins]")              
+        elif bins == 'unique_values':
+            if same_bins:
+                bins_xy = np.unique([x, y])
+                bins = [bins_xy, bins_xy]
+            else:
+                bins_x = np.unique(x)
+                bins_y = np.unique(y)
+                bins = [bins_x, bins_y]
+        else:
+            raise ValueError(f"Binning option {bins} not know.")
+    
+    # always return bins as bin edges: [np.ndarray, np.ndarray] 
+    return bins
+
+
+
 def entropy(x, bins, normalize=False, use_probs=False):
     """ Shannon Entropy
     Calculates the Shannon Entropy for the given data array x.
@@ -123,13 +200,16 @@ def conditional_entropy(x, y, bins, normalize=False):
     entropy of y.
 
     """
+    
+    # get the bins
+    bins = get_2D_bins(x, y, bins)
+    
     # calculate H(x,y) and H(y)
     hjoint = joint_entropy(x,y,bins)
-    hy = entropy(y, bins)
+    hy = entropy(y, bins[1])
 
     if normalize:
-        bins_x = np.histogram_bin_edges(x, bins)
-        normalizer = entropy(x, bins_x)
+        normalizer = entropy(x, bins[0])
         conditional_entropy = hjoint - hy
 
         # check if conditional entropy and normalizer are very small
@@ -188,16 +268,15 @@ def mutual_information(x, y, bins, normalize=False):
     # assert array length
     assert len(x) == len(y)
 
+    # get the bins
+    bins = get_2D_bins(x, y, bins)
+
     # calculate entropy(x) and conditional_entropy(x,y)
-    hx = entropy(x, bins)
+    hx = entropy(x, bins[0])
     hcon = conditional_entropy(x, y, bins)
 
     if normalize:
-        # get the bins
-        bins_x = np.histogram_bin_edges(x, bins)
-        bins_y = np.histogram_bin_edges(y, bins)
-
-        normalizer = np.min([entropy(x, bins_x), entropy(y, bins_y)])
+        normalizer = np.min([entropy(x, bins[0]), entropy(y, bins[1])])
         mutual_info = hx - hcon
 
         # check if mutual info and normalizer are very small
@@ -266,12 +345,12 @@ def cross_entropy(x, y, bins, use_probs=False):
         px = x + 1e-15
         py = y + 1e-15
     else:
-        # get the bins
-        bins = np.histogram_bin_edges([x, y], bins)
+        # get the bins, joint bins for x and y (same_bins=True)
+        bins = get_2D_bins(x, y, bins, same_bins=True)
 
         # calculate unconditioned histograms
-        hist_x = np.histogram(x, bins=bins)[0]
-        hist_y = np.histogram(y, bins=bins)[0]
+        hist_x = np.histogram(x, bins=bins[0])[0]
+        hist_y = np.histogram(y, bins=bins[1])[0]
 
         px = (hist_x / np.sum(hist_x)) + 1e-15
         py = (hist_y / np.sum(hist_y)) + 1e-15
@@ -318,12 +397,10 @@ def joint_entropy(x, y, bins):
     assert len(x) == len(y)
 
     # get the bins, x and y get their own bins in case of joint entropy
-    bins_x = np.histogram_bin_edges(x, bins)
-    bins_y = np.histogram_bin_edges(y, bins) 
-    bins_xy = [bins_x, bins_y]
+    bins = get_2D_bins(x, y, bins)
 
     # get the joint histogram
-    joint_hist = np.histogram2d(x, y, bins_xy)[0]
+    joint_hist = np.histogram2d(x, y, bins)[0]
 
     # calculate the joint probability and add a small number
     joint_p = (joint_hist / np.sum(joint_hist)) + 1e-15
@@ -385,16 +462,16 @@ def kullback_leibler(x, y, bins, use_probs=False):
         px = x
         py = y
     else:
-        # get the bins
-        bins = np.histogram_bin_edges([x, y], bins)
+        # get the bins, joint bins for x and y (same_bins=True)
+        bins = get_2D_bins(x, y, bins, same_bins=True)
         # calculate unconditioned histograms
-        hist_x = np.histogram(x, bins=bins)[0]
-        hist_y = np.histogram(y, bins=bins)[0]
+        hist_x = np.histogram(x, bins=bins[0])[0]
+        hist_y = np.histogram(y, bins=bins[1])[0]
         #calculate probabilities
         px = (hist_x / np.sum(hist_x))
         py = (hist_y / np.sum(hist_y))
 
-    # calculte the cross entropy and unconditioned entropy of y
+    # calculate the cross entropy and unconditioned entropy of y
     hcross = cross_entropy(px, py, bins, use_probs=True)
     hx = entropy(px, bins, use_probs=True)
     
@@ -468,12 +545,12 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
         px = x + 1e-15
         py = y + 1e-15
     else:
-        # get the bins
-        bins = np.histogram_bin_edges([x, y], bins)
+        # get the bins, joint bins for x and y (same_bins=True)
+        bins = get_2D_bins(x, y, bins, same_bins=True)
 
         # calculate unconditioned histograms
-        hist_x = np.histogram(x, bins=bins)[0]
-        hist_y = np.histogram(y, bins=bins)[0]
+        hist_x = np.histogram(x, bins=bins[0])[0]
+        hist_y = np.histogram(y, bins=bins[1])[0]
 
         # calculate probabilities
         px = (hist_x / np.sum(hist_x)) + 1e-15
