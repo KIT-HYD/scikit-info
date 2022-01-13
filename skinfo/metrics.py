@@ -127,7 +127,6 @@ def entropy(x, bins, normalize=False, xy_probabilities=False):
         if not np.isclose(sum(x),1,atol=0.0001):
             raise ValueError('Probabilities in vector x do not sum up to 1.')
         
-        p = x + 1e-15
         # add a small number to all probabilities if zero occurs
         if x.any(0):
             p = x + 1e-15
