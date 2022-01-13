@@ -78,7 +78,7 @@ def get_2D_bins(x, y, bins, same_bins=False):
 
 
 
-def entropy(x, bins, normalize=False, use_probs=False):
+def entropy(x, bins, normalize=False, xy_probabilities=False):
     """ Shannon Entropy
     Calculates the Shannon Entropy for the given data array x.
 
@@ -95,7 +95,7 @@ def entropy(x, bins, normalize=False, use_probs=False):
     normalize: bool
         If normalize is True, the entropy is normalized by the maximum entropy.
         Defaults to False.
-    use_probs: bool
+    xy_probabilities: bool
         If True, it is assumed that x is already an empirical probability 
         distribution, not observations.
         Defaults to False.
@@ -121,13 +121,18 @@ def entropy(x, bins, normalize=False, use_probs=False):
     probailities calculated this way might not be exactly 1.
 
     """
-    # calculate probabilities if use_probs == False
-    if use_probs:
+    # calculate probabilities if xy_probabilities == False
+    if xy_probabilities:
         # if x does not sum up to 1, raise an error
         if not np.isclose(sum(x),1,atol=0.0001):
             raise ValueError('Probabilities in vector x do not sum up to 1.')
         
         p = x + 1e-15
+        # add a small number to all probabilities if zero occurs
+        if x.any(0):
+            p = x + 1e-15
+        else:
+            p = x
     else:
         # get the bins
         bins = np.histogram_bin_edges(x, bins)
@@ -291,7 +296,7 @@ def mutual_information(x, y, bins, normalize=False):
         return hx - hcon
 
       
-def cross_entropy(x, y, bins, use_probs=False):
+def cross_entropy(x, y, bins, xy_probabilities=False):
     """ Cross Entropy
 
     Calculates the cross entropy of two discrete distributions x and y.
@@ -308,7 +313,7 @@ def cross_entropy(x, y, bins, use_probs=False):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to 
         numpy.histogram_bin_edges in order to calculate the bin edges
-    use_probs: bool
+    xy_probabilities: bool
         If True, it is assumed that x and y are already a empirical probability 
         distributions, not observations.
         Note, that the empirical probability distributions for x and y have to 
@@ -331,8 +336,8 @@ def cross_entropy(x, y, bins, use_probs=False):
 
     """
    # calculate probabilities if probabilities == False
-    if use_probs:
-        # same bins for x and y -> same length of x and y if use_probs == True
+    if xy_probabilities:
+        # same bins for x and y -> same length of x and y if xy_probabilities == True
         assert len(x) == len(y)
 
         # if x does not sum up to 1, raise an error
@@ -342,8 +347,13 @@ def cross_entropy(x, y, bins, use_probs=False):
         if not np.isclose(sum(y),1,atol=0.0001):
             raise ValueError('Probabilities in vector y do not sum up to 1.')
 
-        px = x + 1e-15
-        py = y + 1e-15
+        # add a small number to all probabilities if zero occurs
+        if x.any(0):
+            px = x + 1e-15
+            py = y + 1e-15
+        else:
+            px = x
+            py = y
     else:
         # get the bins, joint bins for x and y (same_bins=True)
         bins = get_2D_bins(x, y, bins, same_bins=True)
@@ -362,8 +372,7 @@ def joint_entropy(x, y, bins):
     r"""Joint Entropy
 
     Calculates the joint entropy of two discrete distributions x and y. This
-    is the combined Entropy of X added to the conditional Entropy of x giv y.
-    The joint entropy will use the same bin setting for both distributions.
+    is the combined Entropy of X added to the conditional Entropy of x given y.
 
     Parameters
     ----------
@@ -409,7 +418,7 @@ def joint_entropy(x, y, bins):
     return - np.sum(joint_p * np.log2(joint_p))
 
 
-def kullback_leibler(x, y, bins, use_probs=False):
+def kullback_leibler(x, y, bins, xy_probabilities=False):
     r"""Kullback-Leibler Divergence
 
     Calculates the Kullback-Leibler Divergence between two discrete
@@ -429,7 +438,7 @@ def kullback_leibler(x, y, bins, use_probs=False):
         In case bins is a list, the list members will be used as bin edges.
         In all other cases, bins will be passed through to 
         numpy.histogram_bin_edges in order to calculate the bin edges
-    use_probs: bool
+    xy_probabilities: bool
         If True, it is assumed that x and y are already empirical probability 
         distributions, not observations.
         Note, that the empirical probability distributions for x and y have to 
@@ -451,7 +460,7 @@ def kullback_leibler(x, y, bins, use_probs=False):
         D_{KL}(x||y) = H(x||y) - H(x)
 
     """
-    if use_probs:
+    if xy_probabilities:
         # if x does not sum up to 1, raise an error
         if not np.isclose(sum(x),1,atol=0.0001):
             raise ValueError('Probabilities in vector x do not sum up to 1.')
@@ -459,8 +468,13 @@ def kullback_leibler(x, y, bins, use_probs=False):
         if not np.isclose(sum(y),1,atol=0.0001):
             raise ValueError('Probabilities in vector y do not sum up to 1.')
         
-        px = x
-        py = y
+        # add a small number to all probabilities if zero occurs
+        if x.any(0):
+            px = x + 1e-15
+            py = y + 1e-15
+        else:
+            px = x
+            py = y
     else:
         # get the bins, joint bins for x and y (same_bins=True)
         bins = get_2D_bins(x, y, bins, same_bins=True)
@@ -472,12 +486,12 @@ def kullback_leibler(x, y, bins, use_probs=False):
         py = (hist_y / np.sum(hist_y))
 
     # calculate the cross entropy and unconditioned entropy of y
-    hcross = cross_entropy(px, py, bins, use_probs=True)
-    hx = entropy(px, bins, use_probs=True)
+    hcross = cross_entropy(px, py, bins, xy_probabilities=True)
+    hx = entropy(px, bins, xy_probabilities=True)
     
     return hcross - hx
 
-def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
+def jensen_shannon(x, y, bins, calc_distance=False, xy_probabilities=False):
     r"""Jensen-Shannon Divergence
 
     Calculates the Jensen-Shannon Divergence (JSD) between two discrete
@@ -503,7 +517,7 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
         Jensen-Shannon distance is a metric and is the square root of the 
         Jensen-Shannon divergence.
         Defaults to False.
-    use_probs: bool
+    xy_probabilities: bool
         If True, it is assumed that x and y are already empirical probability 
         distributions, not observations.
         Note, that the empirical probability distributions for x and y have to 
@@ -534,16 +548,21 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
     # assert array length
     assert len(x) == len(y)
 
-    if use_probs:
+    if xy_probabilities:
         # if x does not sum up to 1, raise an error
         if not np.isclose(sum(x), 1 ,atol=0.0001):
             raise ValueError('Probabilities in vector x do not sum up to 1.')
         # if y does not sum up to 1, raise an error
         if not np.isclose(sum(y), 1, atol=0.0001):
             raise ValueError('Probabilities in vector y do not sum up to 1.')
-
-        px = x + 1e-15
-        py = y + 1e-15
+        
+        # add a small number to all probabilities if zero occurs
+        if x.any(0):
+            px = x + 1e-15
+            py = y + 1e-15
+        else:
+            px = x
+            py = y
     else:
         # get the bins, joint bins for x and y (same_bins=True)
         bins = get_2D_bins(x, y, bins, same_bins=True)
@@ -560,8 +579,8 @@ def jensen_shannon(x, y, bins, calc_distance=False, use_probs=False):
     pm = 0.5 * (px + py)
 
     # calculate kullback-leibler divergence between px and pm & py and pm
-    kl_xm = kullback_leibler(px, pm, bins=bins, use_probs=True)
-    kl_ym = kullback_leibler(py, pm, bins=bins, use_probs=True)
+    kl_xm = kullback_leibler(px, pm, bins=bins, xy_probabilities=True)
+    kl_ym = kullback_leibler(py, pm, bins=bins, xy_probabilities=True)
     
     if calc_distance:
         return (0.5 * kl_xm + 0.5 * kl_ym)**0.5
