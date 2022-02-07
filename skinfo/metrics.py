@@ -490,7 +490,7 @@ def kullback_leibler(x, y, bins, xy_probabilities=False):
     
     return hcross - hx
 
-def jensen_shannon(x, y, bins, calc_distance=False, xy_probabilities=False):
+def jensen_shannon(x, y, bins, calc_distance=False, standardize=False, xy_probabilities=False):
     r"""Jensen-Shannon Divergence
 
     Calculates the Jensen-Shannon Divergence (JSD) between two discrete
@@ -516,6 +516,10 @@ def jensen_shannon(x, y, bins, calc_distance=False, xy_probabilities=False):
         Jensen-Shannon distance is a metric and is the square root of the 
         Jensen-Shannon divergence.
         Defaults to False.
+    standardize : bool
+        If True, values in x and y are standardized by substraction of the sample
+        mean and division by the sample standard deviation. This puts the variables
+        on the same scale and enables comparison of different types of variables. 
     xy_probabilities: bool
         If True, it is assumed that x and y are already empirical probability 
         distributions, not observations.
@@ -546,6 +550,12 @@ def jensen_shannon(x, y, bins, calc_distance=False, xy_probabilities=False):
     """
     # assert array length
     assert len(x) == len(y)
+
+    if standardize and not xy_probabilities:
+        x = (x - x.mean()) / x.std()
+        y = (y - y.mean()) / y.std()
+    elif standardize and xy_probabilities:
+        raise ValueError('Probabilites are not standardized, standardize input variables before probability calculation.')
 
     if xy_probabilities:
         # if x does not sum up to 1, raise an error
